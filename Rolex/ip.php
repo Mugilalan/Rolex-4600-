@@ -1,23 +1,24 @@
-/* ip.php - Logs IP, device info, and location */
 <?php
-if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-    $ipaddress = $_SERVER['HTTP_CLIENT_IP'] . "\r\n";
-} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-    $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'] . "\r\n";
-} else {
-    $ipaddress = $_SERVER['REMOTE_ADDR'] . "\r\n";
-}
-$useragent = " User-Agent: ";
-$browser = $_SERVER['HTTP_USER_AGENT'];
-$location = json_decode(file_get_contents("http://ip-api.com/json/" . trim($ipaddress)), true);
-$lat = $location['lat'];
-$lon = $location['lon'];
-$city = $location['city'];
-$country = $location['country'];
-$file = 'ip.txt';
-$fp = fopen($file, 'a');
-fwrite($fp, "IP: " . $ipaddress);
-fwrite($fp, $useragent . $browser . "\r\n");
-fwrite($fp, "Location: $city, $country (Lat: $lat, Lon: $lon)\r\n");
-fclose($fp);
+// Get user IP
+$ip = $_SERVER['REMOTE_ADDR'];
+
+// Fetch IP details from external API
+$api_url = "http://ip-api.com/json/{$ip}";
+$response = @file_get_contents($api_url);
+$data = json_decode($response, true);
+
+// Handle missing values gracefully
+$lat = $data['lat'] ?? 'Unknown';
+$lon = $data['lon'] ?? 'Unknown';
+$city = $data['city'] ?? 'Unknown';
+$country = $data['country'] ?? 'Unknown';
+
+// Print results
+echo json_encode([
+    'ip' => $ip,
+    'lat' => $lat,
+    'lon' => $lon,
+    'city' => $city,
+    'country' => $country
+]);
 ?>
